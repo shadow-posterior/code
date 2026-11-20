@@ -1,0 +1,109 @@
+model:
+  pretrained_path: weights/stable-diffusion-3.5-medium
+  gradient_checkpointing: false
+  dtype: bf16
+  image_resolution: 512
+  generator_lora:
+    rank: 32
+    lora_alpha: 64
+    target_modules:
+    - attn.to_q
+    - attn.to_k
+    - attn.to_v
+    - attn.to_out.0
+    - attn.add_k_proj
+    - attn.add_v_proj
+    - attn.add_q_proj
+    - attn.to_add_out
+    init_lora_weights: gaussian
+    load_path: ckpts/sd35m_dmd/generator_ema.pt
+  fake_score_lora:
+    rank: 32
+    lora_alpha: 64
+    target_modules:
+    - attn.to_q
+    - attn.to_k
+    - attn.to_v
+    - attn.to_out.0
+    - attn.add_k_proj
+    - attn.add_v_proj
+    - attn.add_q_proj
+    - attn.to_add_out
+    init_lora_weights: gaussian
+    load_path: ckpts/sd35m_dmd/fake_score_net.pt
+  fp32_master_weights: true
+objective:
+  adv_clip_max: 5.0
+  reward_fn:
+    geneval: 1.0
+  per_prompt_global_std: true
+  num_image_per_prompt: 24
+  reward_batch_size: 9
+  alpha: 0.1
+  gamma: 0.1
+sampling:
+  denoising_step_list: [1000, 750, 500, 250]
+  min_step: 20
+  max_step: 980
+  teacher_guidance_scale: 4.5
+solver:
+  generator:
+    lr: 3.0e-06
+    warmup_steps: 0
+    beta1: 0.9
+    beta2: 0.999
+    eps: 1.0e-08
+    weight_decay: 0.0001
+    max_grad_norm: 1.0
+  fake_score:
+    lr: 3.0e-05
+    warmup_steps: 0
+    beta1: 0.9
+    beta2: 0.999
+    eps: 1.0e-08
+    weight_decay: 0.0
+    max_grad_norm: 1.0
+train:
+  log_interval: 10
+  save_interval: 100
+  total_steps: 1000
+  seed: 42
+  autocast_dtype: bf16
+  resume_from: ''
+  batch_size: 9
+  gradient_accumulation_steps: 16
+  use_ema: true
+  ema_decay: 0.9
+  ema_every: 8
+distributed:
+  strategy: ddp
+logging:
+  api_key: ""
+  project: SPM
+  run_name: sd35m_geneval
+  tags: [lora, sd35m, geneval]
+  enabled: true
+eval:
+  eval_interval: 100
+  enabled: true
+  eval_at_start: true
+  eval_prompt_source: dataset
+  dataset_path: dataset
+  dataset: geneval
+  num_media_images: 64
+  eval_seed: 42
+  reward_fn:
+    geneval: 1.0
+  reward_dataset_map:
+    geneval: geneval
+  eval_num_steps: 4
+  eval_batch_size: 16
+  benchmark_reward_fn:
+    drawbench:
+      aesthetic: 1.0
+      deqa: 1.0
+      imagereward: 1.0
+      pickscore: 1.0
+      hpsv2: 1.0
+prompt_path: dataset/geneval/train_metadata.jsonl
+output_dir: outputs/geneval

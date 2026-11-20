@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spm"
+version = "0.1.0"
+description = "Shadow Posterior Matching"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2.0",
+    "torchvision>=0.17.0",
+    "diffusers>=0.37.0",
+    "transformers>=4.57.1,<5",
+    "accelerate>=1.0.0",
+    "peft>=0.17.0",
+    "pyyaml>=6.0",
+    "swanlab==0.10.2",
+    "numpy>=1.24.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+flash-attention = ["flash-attn>=2.5.0"]
+
+[tool.setuptools.packages.find]
+include = ["src", "src.*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+"src.rewards" = ["object_names.txt"]
